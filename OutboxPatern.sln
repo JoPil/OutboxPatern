@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Messaging.Contracts", "Messaging.Contracts\Messaging.Contracts.csproj", "{C3950B23-0DD6-496A-9C86-D593EA5F43DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutboxProcessing", "OutboxProcessing\OutboxProcessing.csproj", "{419EF8EA-06B4-47C2-9496-A4D2BB6A4C4D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C3950B23-0DD6-496A-9C86-D593EA5F43DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3950B23-0DD6-496A-9C86-D593EA5F43DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3950B23-0DD6-496A-9C86-D593EA5F43DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3950B23-0DD6-496A-9C86-D593EA5F43DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{419EF8EA-06B4-47C2-9496-A4D2BB6A4C4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{419EF8EA-06B4-47C2-9496-A4D2BB6A4C4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{419EF8EA-06B4-47C2-9496-A4D2BB6A4C4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{419EF8EA-06B4-47C2-9496-A4D2BB6A4C4D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
