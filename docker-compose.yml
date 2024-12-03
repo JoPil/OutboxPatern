@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  outbox_scaling-db:
+    image: postgres:latest
+    container_name: outbox_scaling.Db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: outbox_scaling
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  masstransit_rabbitmq:
+    image: rabbitmq:4.0.4-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  postgres_data:

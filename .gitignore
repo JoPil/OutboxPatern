@@ -16,6 +16,9 @@
 # Mono auto generated files
 mono_crash.*
 
+# Docker files
+.containers/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
