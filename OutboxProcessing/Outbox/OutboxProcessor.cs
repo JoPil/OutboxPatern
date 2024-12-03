@@ -27,7 +27,7 @@ internal sealed class OutboxProcessor(
         stepStopwatch.Restart();
         var messages = (await connection.QueryAsync<OutboxMessage>(
             """
-            SELECT *
+            SELECT id AS Id, type AS Type, content AS Content 
             FROM outbox_messages
             WHERE processed_on_utc IS NULL
             ORDER BY occurred_on_utc LIMIT @BatchSize
@@ -35,8 +35,6 @@ internal sealed class OutboxProcessor(
             new { BatchSize },
             transaction: transaction)).AsList();
         var queryTime = stepStopwatch.ElapsedMilliseconds;
-
-        var updateQueue = new ConcurrentQueue<OutboxUpdate>();
 
         stepStopwatch.Restart();
         foreach (var message in messages)
@@ -48,35 +46,40 @@ internal sealed class OutboxProcessor(
 
                 await publishEndpoint.Publish(deserializedMessage!, messageType!, cancellationToken);
 
-                updateQueue.Enqueue(new OutboxUpdate
-                {
-                    Id = message.Id,
-                    ProcessedOnUtc = DateTime.UtcNow
-                });
             }
             catch (Exception ex)
             {
-                updateQueue.Enqueue(new OutboxUpdate
-                {
-                    Id = message.Id,
-                    ProcessedOnUtc = DateTime.UtcNow,
-                    Error = ex.ToString()
-                });
+
             }
         }
         var publishTime = stepStopwatch.ElapsedMilliseconds;
 
         stepStopwatch.Restart();
-        foreach (var outboxUpdate in updateQueue)
+        foreach (var message in messages)
         {
-            await connection.ExecuteAsync(
+            try
+            {
+                await connection.ExecuteAsync(
+                """
+                UPDATE outbox_messages
+                SET processed_on_utc = @ProcessedOnUtc
+                WHERE id = @Id
+                """,
+                new { ProcessedOnUtc = DateTime.Now, message.Id },
+                transaction: transaction);
+
+            }
+            catch (Exception ex)
+            {
+                await connection.ExecuteAsync(
                 """
                 UPDATE outbox_messages
                 SET processed_on_utc = @ProcessedOnUtc, error = @Error
                 WHERE id = @Id
                 """,
-                outboxUpdate,
+                new { ProcessedOnUtc = DateTime.Now, Error = ex.ToString(), message.Id },
                 transaction: transaction);
+            }
         }
         var updateTime = stepStopwatch.ElapsedMilliseconds;
 

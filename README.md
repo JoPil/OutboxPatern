@@ -27,7 +27,7 @@ Using BatchSize = 10 on OutboxProcessor
     - Total processed messages: 7600
 ```
 
-### 2st experiment
+### 2nd experiment
 
 Instead of processing 10 messages at a time, BatchSize is increased to 1000.
 
@@ -42,4 +42,21 @@ Instead of processing 10 messages at a time, BatchSize is increased to 1000.
     OutboxBackgroundService finished.
     - Total iterations: 68
     - Total processed messages: 67000
+```
+
+### 3rd experiment
+
+Instead of processing 10 messages at a time, BatchSize is increased to 1000.
+
+```
+    Outbox processing completed.
+    - Total time: 800ms
+    - Query time: 3ms
+    - Publish time: 419ms
+    - Update time: 375ms
+    - Messages processed: 1000
+
+    OutboxBackgroundService finished.
+    - Total iterations: 72
+    - Total processed messages: 71000
 ```

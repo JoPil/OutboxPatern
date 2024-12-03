@@ -63,6 +63,12 @@ internal sealed class DatabaseInitializer(
                 processed_on_utc TIMESTAMP WITH TIME ZONE NULL,
                 error TEXT NULL
             );
+            
+            -- Create a filtered index on unprocessed messages, including all necessary columns
+            CREATE INDEX IF NOT EXISTS idx_outbox_messages_unprocessed 
+            ON public.outbox_messages (occurred_on_utc, processed_on_utc)
+            INCLUDE (id, type, content)
+            WHERE processed_on_utc IS NULL;
             """;
         using NpgsqlConnection connection = await dataSource.OpenConnectionAsync();
         await connection.ExecuteAsync(sql);
