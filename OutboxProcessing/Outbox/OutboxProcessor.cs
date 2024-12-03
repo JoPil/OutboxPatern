@@ -36,8 +36,6 @@ internal sealed class OutboxProcessor(
             transaction: transaction)).AsList();
         var queryTime = stepStopwatch.ElapsedMilliseconds;
 
-        var updateQueue = new ConcurrentQueue<OutboxUpdate>();
-
         stepStopwatch.Restart();
         foreach (var message in messages)
         {
@@ -48,35 +46,27 @@ internal sealed class OutboxProcessor(
 
                 await publishEndpoint.Publish(deserializedMessage!, messageType!, cancellationToken);
 
-                updateQueue.Enqueue(new OutboxUpdate
-                {
-                    Id = message.Id,
-                    ProcessedOnUtc = DateTime.UtcNow
-                });
+                await connection.ExecuteAsync(
+                """
+                UPDATE outbox_messages
+                SET processed_on_utc = @ProcessedOnUtc
+                WHERE id = @Id
+                """,
+                new { ProcessedOnUtc = DateTime.Now, message.Id },
+                transaction: transaction);
+
             }
             catch (Exception ex)
             {
-                updateQueue.Enqueue(new OutboxUpdate
-                {
-                    Id = message.Id,
-                    ProcessedOnUtc = DateTime.UtcNow,
-                    Error = ex.ToString()
-                });
-            }
-        }
-        var publishTime = stepStopwatch.ElapsedMilliseconds;
-
-        stepStopwatch.Restart();
-        foreach (var outboxUpdate in updateQueue)
-        {
-            await connection.ExecuteAsync(
+                await connection.ExecuteAsync(
                 """
                 UPDATE outbox_messages
                 SET processed_on_utc = @ProcessedOnUtc, error = @Error
                 WHERE id = @Id
                 """,
-                outboxUpdate,
+                new { ProcessedOnUtc = DateTime.Now, Error = ex.ToString(), message.Id },
                 transaction: transaction);
+            }
         }
         var updateTime = stepStopwatch.ElapsedMilliseconds;
 
@@ -85,7 +75,7 @@ internal sealed class OutboxProcessor(
         totalStopwatch.Stop();
         var totalTime = totalStopwatch.ElapsedMilliseconds;
 
-        OutboxLoggers.LogProcessingPerformance(logger, totalTime, queryTime, publishTime, updateTime, messages.Count);
+        OutboxLoggers.LogProcessingPerformance(logger, totalTime, queryTime, updateTime, updateTime, messages.Count);
 
         return messages.Count;
     }
