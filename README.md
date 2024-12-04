@@ -94,3 +94,22 @@ Optimizing UPDATE queries
     - Total iterations: 124
     - Total processed messages: 123000
 ```
+
+### 6th experiment
+
+Using multiple parallel outbox processors
+
+```
+    Outbox processing completed.
+    - Total time: 68ms
+    - Query time: 8ms
+    - Publish time: 39ms
+    - Update time: 16ms
+    - Messages processed: 1000
+
+    OutboxBackgroundService finished.
+    - Total iterations: 1957
+    - Total processed messages: 1953000
+```
+
+MAX 32,550 Mps

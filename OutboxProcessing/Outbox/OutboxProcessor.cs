@@ -32,6 +32,7 @@ internal sealed class OutboxProcessor(
             FROM outbox_messages
             WHERE processed_on_utc IS NULL
             ORDER BY occurred_on_utc LIMIT @BatchSize
+            FOR UPDATE SKIP LOCKED
             """,
             new { BatchSize },
             transaction: transaction)).AsList();
