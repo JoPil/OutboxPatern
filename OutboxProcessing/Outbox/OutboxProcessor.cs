@@ -15,6 +15,7 @@ internal sealed class OutboxProcessor(
     ILogger<OutboxProcessor> logger)
 {
     private const int BatchSize = 1000;
+    private static readonly ConcurrentDictionary<string, Type> TypeCache = new();
 
     public async Task<int> Execute(CancellationToken cancellationToken = default)
     {
@@ -41,10 +42,10 @@ internal sealed class OutboxProcessor(
         {
             try
             {
-                var messageType = Messaging.Contracts.AssemblyReference.Assembly.GetType(message.Type);
-                var deserializedMessage = JsonSerializer.Deserialize(message.Content, messageType!);
+                var messageType = GetOrAddMessageType(message.Type);
+                var deserializedMessage = JsonSerializer.Deserialize(message.Content, messageType)!;
 
-                await publishEndpoint.Publish(deserializedMessage!, messageType!, cancellationToken);
+                await publishEndpoint.Publish(deserializedMessage, messageType!, cancellationToken);
 
             }
             catch (Exception ex)
@@ -98,5 +99,10 @@ internal sealed class OutboxProcessor(
         public Guid Id { get; init; }
         public DateTime ProcessedOnUtc { get; init; }
         public string? Error { get; init; }
+    }
+
+    private static Type GetOrAddMessageType(string typeName)
+    {
+        return TypeCache.GetOrAdd(typeName, name => Messaging.Contracts.AssemblyReference.Assembly.GetType(name)!);
     }
 }
