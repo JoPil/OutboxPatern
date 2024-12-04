@@ -48,16 +48,34 @@ internal sealed class OutboxProcessor(
         var publishTime = stepStopwatch.ElapsedMilliseconds;
 
         stepStopwatch.Restart();
-        foreach (var message in updateQueue)
+        if (!updateQueue.IsEmpty)
         {
-            await connection.ExecuteAsync(
-                """
-                UPDATE outbox_messages
-                SET processed_on_utc = @ProcessedOnUtc, error = @Error
-                WHERE id = @Id
-                """,
-            message,
-            transaction: transaction);
+            var updateSql =
+            """
+            UPDATE outbox_messages
+            SET processed_on_utc = v.processed_on_utc,
+                error = v.error
+            FROM (VALUES {0}
+            ) AS v(id, processed_on_utc, error)
+            WHERE outbox_messages.id = v.id::uuid
+            """;
+
+            var updates = updateQueue.ToList();
+            var valueList = string.Join(",",
+                updateQueue.Select((_, i) => $"(@Id{i}, @ProcessedOn{i}, @Error{i})"));
+
+            var parameters = new DynamicParameters();
+
+            for (int i = 0; i < updateQueue.Count; i++)
+            {
+                parameters.Add($"Id{i}", updates[i].Id.ToString());
+                parameters.Add($"ProcessedOn{i}", updates[i].ProcessedOnUtc);
+                parameters.Add($"Error{i}", updates[i].Error);
+            }
+
+            var formattedSql = string.Format(updateSql, valueList);
+
+            await connection.ExecuteAsync(formattedSql, parameters, transaction: transaction);
         }
         var updateTime = stepStopwatch.ElapsedMilliseconds;
 

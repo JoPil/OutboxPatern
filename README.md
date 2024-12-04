@@ -77,3 +77,20 @@ Create cache to avoid using reflection every time to get the type of message and
     - Total iterations: 75
     - Total processed messages: 74000
 ```
+
+### 5th experiment
+
+Optimizing UPDATE queries
+
+```
+    Outbox processing completed.
+    - Total time: 481ms
+    - Query time: 7ms
+    - Publish time: 409ms
+    - Update time: 61ms
+    - Messages processed: 1000
+
+    OutboxBackgroundService finished.
+    - Total iterations: 124
+    - Total processed messages: 123000
+```
