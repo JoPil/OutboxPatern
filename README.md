@@ -46,7 +46,7 @@ Instead of processing 10 messages at a time, BatchSize is increased to 1000.
 
 ### 3rd experiment
 
-Instead of processing 10 messages at a time, BatchSize is increased to 1000.
+Optimize Db queries by using indexes.
 
 ```
     Outbox processing completed.
@@ -59,4 +59,21 @@ Instead of processing 10 messages at a time, BatchSize is increased to 1000.
     OutboxBackgroundService finished.
     - Total iterations: 72
     - Total processed messages: 71000
+```
+
+### 4th experiment
+
+Create cache to avoid using reflection every time to get the type of message and use batch publishing messages to rabbitmq
+
+```
+    Outbox processing completed.
+    - Total time: 797ms
+    - Query time: 2ms
+    - Publish time: 373ms
+    - Update time: 396ms
+    - Messages processed: 1000
+
+    OutboxBackgroundService finished.
+    - Total iterations: 75
+    - Total processed messages: 74000
 ```

@@ -37,50 +37,27 @@ internal sealed class OutboxProcessor(
             transaction: transaction)).AsList();
         var queryTime = stepStopwatch.ElapsedMilliseconds;
 
+        var updateQueue = new ConcurrentQueue<OutboxUpdate>();
+
         stepStopwatch.Restart();
-        foreach (var message in messages)
-        {
-            try
-            {
-                var messageType = GetOrAddMessageType(message.Type);
-                var deserializedMessage = JsonSerializer.Deserialize(message.Content, messageType)!;
+        var publishTasks = messages
+            .Select(message => PublishMessage(publishEndpoint, updateQueue, message, cancellationToken))
+            .ToList();
 
-                await publishEndpoint.Publish(deserializedMessage, messageType!, cancellationToken);
-
-            }
-            catch (Exception ex)
-            {
-
-            }
-        }
+        await Task.WhenAll(publishTasks);
         var publishTime = stepStopwatch.ElapsedMilliseconds;
 
         stepStopwatch.Restart();
-        foreach (var message in messages)
+        foreach (var message in updateQueue)
         {
-            try
-            {
-                await connection.ExecuteAsync(
-                """
-                UPDATE outbox_messages
-                SET processed_on_utc = @ProcessedOnUtc
-                WHERE id = @Id
-                """,
-                new { ProcessedOnUtc = DateTime.Now, message.Id },
-                transaction: transaction);
-
-            }
-            catch (Exception ex)
-            {
-                await connection.ExecuteAsync(
+            await connection.ExecuteAsync(
                 """
                 UPDATE outbox_messages
                 SET processed_on_utc = @ProcessedOnUtc, error = @Error
                 WHERE id = @Id
                 """,
-                new { ProcessedOnUtc = DateTime.Now, Error = ex.ToString(), message.Id },
-                transaction: transaction);
-            }
+            message,
+            transaction: transaction);
         }
         var updateTime = stepStopwatch.ElapsedMilliseconds;
 
@@ -92,6 +69,24 @@ internal sealed class OutboxProcessor(
         OutboxLoggers.LogProcessingPerformance(logger, totalTime, queryTime, publishTime, updateTime, messages.Count);
 
         return messages.Count;
+    }
+
+    private static async Task PublishMessage(IPublishEndpoint publishEndpoint, ConcurrentQueue<OutboxUpdate> updateQueue, OutboxMessage message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var messageType = GetOrAddMessageType(message.Type);
+            var deserializedMessage = JsonSerializer.Deserialize(message.Content, messageType)!;
+
+            await publishEndpoint.Publish(deserializedMessage, messageType!, cancellationToken);
+
+            updateQueue.Enqueue(new OutboxUpdate { Id = message.Id, ProcessedOnUtc = DateTime.UtcNow });
+
+        }
+        catch (Exception ex)
+        {
+            updateQueue.Enqueue(new OutboxUpdate { Id = message.Id, ProcessedOnUtc = DateTime.UtcNow, Error = ex.ToString() });
+        }
     }
 
     private struct OutboxUpdate
