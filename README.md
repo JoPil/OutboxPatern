@@ -1,5 +1,22 @@
 # Optimizing outbox pattern
 
+Main goal of this project is to identify and address bottlenecks related to scaling outbox pattern.
+
+Optimization technics:
+
+- Optimized database queries with smart indexing
+- Improved message publishing with batching
+- Streamlined database updates with batching
+- Scaled out Outbox processing with parallel workers
+- Leveraged RabbitMQ's batch publishing feature
+- Different versions of MassTransit.RabbitMQ
+
+The result?
+
+Processing from 1,350 messages per second to an impressive ~32,500 MPS. Or about 2.8 billion messages per day!
+
+\*Explore the appropriate branch to test various optimizing technics
+
 ## Initial container setup
 
 You will need a rabbitmq instance and a postgres database. Remember to run it on "release" mode.
@@ -110,6 +127,24 @@ Using multiple parallel outbox processors
     OutboxBackgroundService finished.
     - Total iterations: 1957
     - Total processed messages: 1953000
+
+    MAX 32,550 Mps
 ```
 
-MAX 32,550 Mps
+### 7th experiment
+
+Update to latest version of MassTransit.RabbitMQ Version="8.3.2"
+
+```
+    Outbox processing completed.
+    - Total time: 263ms
+    - Query time: 95ms
+    - Publish time: 95ms
+    - Update time: 55ms
+    - Messages processed: 1000
+
+    OutboxBackgroundService finished.
+    - Total iterations: 1950
+    - Total processed messages: 1746000
+
+```
