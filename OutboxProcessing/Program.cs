@@ -19,14 +19,7 @@ builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration.GetConnectionString("Queue"), hostCfg =>
-        {
-            hostCfg.ConfigureBatchPublish(batch =>
-            {
-                batch.Enabled = true;
-            });
-        }
-        );
+        cfg.Host(builder.Configuration.GetConnectionString("Queue"));
 
         cfg.ConfigureEndpoints(context);
     });
